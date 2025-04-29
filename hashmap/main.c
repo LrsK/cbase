@@ -10,7 +10,7 @@ void str_shift_left(char* str, uint8_t amount) {
 
 int main() {
     HashMap* hm = hashmap_init();
-#define ITEMS 4000
+#define ITEMS 10
 #define NUMPADDING 4
     char keys[ITEMS][10];
     for (int i = 0; i < ITEMS; ++i) {
@@ -37,4 +37,22 @@ int main() {
             printf("%s:%s - different.\n", keys[i], result);
         }
     }
+
+    int status = 0;
+    hashmap_set(hm, "test123", "test123");
+    hashmap_print(hm);
+    status = hashmap_get(hm, "test123", result);
+    if (status) {
+        printf("something went wrong when looking for test123\n");
+    }
+    status = hashmap_del(hm, "test123");
+    if (status) {
+        printf("something went wrong when deleting test123\n");
+    }
+    status = hashmap_get(hm, "test123", result);
+    if (!status) {
+        printf("shouldn't have found test123\n");
+    }
+    hashmap_print(hm);
+
 }

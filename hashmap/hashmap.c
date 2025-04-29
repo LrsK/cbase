@@ -83,6 +83,24 @@ int hashmap_get(HashMap* hm, const char* key, char* result) {
     return -1;
 }
 
+int hashmap_del(HashMap *hm, const char *key) {
+    uint32_t index = hash(key) % hm->size;
+    uint32_t lookup_index = index;
+    do {
+        if (hm->slots[lookup_index].set && strcmp(hm->slots[lookup_index].key, key) == 0) {
+            free(hm->slots[lookup_index].key);
+            hm->slots[lookup_index].key = 0;
+            free(hm->slots[lookup_index].value);
+            hm->slots[lookup_index].value = 0;
+            hm->slots[lookup_index].set = 0;
+            return 0;
+        }
+        lookup_index = (lookup_index + 1) % hm->size;
+    } while (lookup_index != index);
+
+    return -1;
+}
+
 void hashmap_print(HashMap* hm) {
     for (size_t i = 0; i < hm->size; ++i) {
         printf("%s: %s\n", hm->slots[i].key, hm->slots[i].value);

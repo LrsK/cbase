@@ -1,0 +1,19 @@
+# .clang-format
+
+BasedOnStyle: LLVM  # You can choose from LLVM, Google, Chromium, Mozilla, WebKit, or Microsoft
+IndentWidth: 4      # Number of spaces for each indentation level
+TabWidth: 4         # Number of spaces a tab counts for
+UseTab: Never        # Use spaces instead of tabs
+BreakBeforeBraces: Attach  # Options: Attach, Linux, Stroustrup, Allman, Custom
+AllowShortBlocksOnASingleLine: Always  # Options: Never, Always, Empty
+AllowShortCaseLabelsOnASingleLine: true
+AllowShortFunctionsOnASingleLine: Inline  # Options: Empty, Inline, All
+ColumnLimit: 120     # Maximum line length
+SpaceBeforeParens: ControlStatements  # Options: Never, Always, ControlStatements
+SpaceAfterCStyleCast: true
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+SpaceBeforeSquareBrackets: false
+SpaceAfterTemplateKeyword: true
+SortIncludes: true  # Sort #include directives
+PointerAlignment: Left # keep pointer stars next to base type
