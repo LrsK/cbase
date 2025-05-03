@@ -23,7 +23,7 @@ typedef struct {
     KV* slots;
 } HashMap;
 
-HashMap* hashmap_init();
+HashMap* hashmap_init(void);
 void hashmap_set(HashMap* hm, const char* key, const char* value);
 int hashmap_get(HashMap* hm, const char* key, char* result);
 int hashmap_del(HashMap* hm, const char* key);

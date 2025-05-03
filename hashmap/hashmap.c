@@ -16,7 +16,7 @@ static uint32_t hash(const char* key) {
     return hash;
 }
 
-HashMap* hashmap_init() {
+HashMap* hashmap_init(void) {
     HashMap* hm = calloc(1, sizeof(HashMap));
     KV* slots = calloc(HASHMAP_INIT_SLOT_SIZE, sizeof(KV));
     hm->slots = slots;
@@ -28,22 +28,23 @@ HashMap* hashmap_init() {
 static void hashmap_resize(HashMap* hm) {
     size_t original_size = hm->size;
     hm->size = hm->size * HASHMAP_SLOT_GROWTH_FACTOR;
-    hm->slots = realloc(hm->slots, sizeof(KV) * hm->size);
-    for (size_t i = original_size; i < hm->size; ++i) {
-        hm->slots[i].key = 0;
-        hm->slots[i].value = 0;
-        hm->slots[i].set = 0;
-    }
+    printf("RESIZE %zu->%zu\n", original_size, hm->size);
+    KV* new_slots = (KV*)calloc(hm->size, sizeof(KV));
 
     // Rehash
-    for (size_t i = 0; i < hm->size; ++i) {
+    for (size_t i = 0; i < original_size; ++i) {
         if (hm->slots[i].set) {
             uint32_t index = hash(hm->slots[i].key) % hm->size;
-            while (hm->slots[index].set) {
+            while (new_slots[index].set) {
                 index = (index + 1) % hm->size;
             }
+            new_slots[index].key = hm->slots[i].key; // Transfer ownership
+            new_slots[index].value = hm->slots[i].value; // Transfer ownership
+            new_slots[index].set = 1; // Mark as set	
         }
     }
+    free(hm->slots);
+    hm->slots = new_slots;
 }
 
 void hashmap_set(HashMap* hm, const char* key, const char* value) {
