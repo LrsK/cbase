@@ -20,6 +20,7 @@ typedef struct {
 
 typedef struct {
     size_t size;
+    size_t set_count;
     KV* slots;
 } HashMap;
 

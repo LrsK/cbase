@@ -21,7 +21,7 @@ HashMap* hashmap_init(void) {
     KV* slots = calloc(HASHMAP_INIT_SLOT_SIZE, sizeof(KV));
     hm->slots = slots;
     hm->size = HASHMAP_INIT_SLOT_SIZE;
-
+    hm->set_count = 0;
     return hm;
 }
 
@@ -48,6 +48,10 @@ static void hashmap_resize(HashMap* hm) {
 }
 
 void hashmap_set(HashMap* hm, const char* key, const char* value) {
+    if (hm->set_count > ((hm->size*3)/4)) {
+        hashmap_resize(hm);
+    }
+
     uint32_t index = hash(key) % hm->size;
     uint32_t org_index = index;
 
@@ -68,6 +72,7 @@ void hashmap_set(HashMap* hm, const char* key, const char* value) {
     strcpy(hm->slots[index].value, value);
 
     hm->slots[index].set = 1;
+    hm->set_count++;
 }
 
 int hashmap_get(HashMap* hm, const char* key, char* result) {
@@ -94,6 +99,7 @@ int hashmap_del(HashMap *hm, const char *key) {
             free(hm->slots[lookup_index].value);
             hm->slots[lookup_index].value = 0;
             hm->slots[lookup_index].set = 0;
+            hm->set_count--;
             return 0;
         }
         lookup_index = (lookup_index + 1) % hm->size;
