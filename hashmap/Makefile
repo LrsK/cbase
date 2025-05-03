@@ -1,14 +1,18 @@
 CC=gcc
-CFLAGS=-Wall -Wextra -Wpedantic -std=c99 -ggdb
+CFLAGS=-Wall -Werror -Wextra -Wpedantic -std=c99 -ggdb
+OPTIMIZATION_FLAGS=-O2
 
 all: hm
 hm: main.c hashmap.c
 	$(CC) $(CFLAGS) main.c hashmap.c -o hm
 
+release: CFLAGS += $(OPTIMIZATION_FLAGS)
+release: hm
+
 clean:
-	rm -f hm
+	rm -rf hm hm.dSYM
 
 run: hm
 	./hm
 
-.PHONY: run clean
+.PHONY: run release elean
