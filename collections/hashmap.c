@@ -16,48 +16,54 @@ static uint32_t hash(const char* key) {
     return hash;
 }
 
-HashMap* hashmap_init(void) {
-    HashMap* hm = calloc(1, sizeof(HashMap));
-    KV* slots = calloc(HASHMAP_INIT_SLOT_SIZE, sizeof(KV));
-    hm->slots = slots;
-    hm->size = HASHMAP_INIT_SLOT_SIZE;
-    hm->set_count = 0;
+HashMap hashmap_init(size_t key_size, size_t val_size, HashFn hash, CmpFn cmp) {
+    KV* slots = (KV*)calloc(HASHMAP_INIT_SLOT_SIZE, sizeof(KV));
+    HashMap hm = {
+        .key_size = key_size,
+        .val_size = val_size,
+        .hash = hash,
+        .cmp = cmp,
+        .set_count = 0,
+        .capacity = HASHMAP_INIT_SLOT_SIZE,
+        .slots = slots,
+    };
+
     return hm;
 }
 
 static void hashmap_resize(HashMap* hm) {
-    size_t original_size = hm->size;
-    hm->size = hm->size * HASHMAP_SLOT_GROWTH_FACTOR;
-    printf("RESIZE %zu->%zu\n", original_size, hm->size);
-    KV* new_slots = (KV*)calloc(hm->size, sizeof(KV));
+    size_t original_capacity = hm->capacity;
+    hm->capacity = hm->capacity * HASHMAP_SLOT_GROWTH_FACTOR;
+    printf("RESIZE %zu->%zu\n", original_capacity, hm->capacity);
+    KV* new_slots = (KV*)calloc(hm->capacity, sizeof(KV));
 
     // Rehash
-    for (size_t i = 0; i < original_size; ++i) {
+    for (size_t i = 0; i < original_capacity; ++i) {
         if (hm->slots[i].set) {
-            uint32_t index = hash(hm->slots[i].key) % hm->size;
+            uint32_t index = hm->hash(hm->slots[i].key) % hm->capacity;
             while (new_slots[index].set) {
-                index = (index + 1) % hm->size;
+                index = (index + 1) % hm->capacity;
             }
-            new_slots[index].key = hm->slots[i].key; // Transfer ownership
+            new_slots[index].key = hm->slots[i].key;     // Transfer ownership
             new_slots[index].value = hm->slots[i].value; // Transfer ownership
-            new_slots[index].set = 1; // Mark as set	
+            new_slots[index].set = 1;                    // Mark as set
         }
     }
     free(hm->slots);
     hm->slots = new_slots;
 }
 
-void hashmap_set(HashMap* hm, const char* key, const char* value) {
-    if (hm->set_count > ((hm->size*3)/4)) {
+void hashmap_set(HashMap* hm, void* key, void* value) {
+    if (hm->set_count > ((hm->capacity * 3) / 4)) {
         hashmap_resize(hm);
     }
 
-    uint32_t index = hash(key) % hm->size;
+    uint32_t index = hm->hash(key) % hm->capacity;
     uint32_t org_index = index;
 
-    while (hm->slots[index].set && strcmp(hm->slots[index].key, key)) {
+    while (hm->slots[index].set && hm->cmp(hm->slots[index].key, key)) {
         // move to next slot, this is a collision
-        index = (index + 1) % hm->size;
+        index = (index + 1) % hm->capacity;
         if (index == org_index) {
             // We looped around, resize
             hashmap_resize(hm);
@@ -75,25 +81,25 @@ void hashmap_set(HashMap* hm, const char* key, const char* value) {
     hm->set_count++;
 }
 
-int hashmap_get(HashMap* hm, const char* key, char* result) {
-    uint32_t index = hash(key) % hm->size;
+int hashmap_get(HashMap* hm, void* key, void* result) {
+    uint32_t index = hm->hash(key) % hm->capacity;
     uint32_t lookup_index = index;
     do {
-        if (hm->slots[lookup_index].set && strcmp(hm->slots[lookup_index].key, key) == 0) {
+        if (hm->slots[lookup_index].set && hm->cmp(hm->slots[lookup_index].key, key) == 0) {
             strcpy(result, hm->slots[lookup_index].value);
             return 0;
         }
-        lookup_index = (lookup_index + 1) % hm->size;
+        lookup_index = (lookup_index + 1) % hm->capacity;
     } while (lookup_index != index);
 
     return -1;
 }
 
-int hashmap_del(HashMap *hm, const char *key) {
-    uint32_t index = hash(key) % hm->size;
+int hashmap_del(HashMap* hm, void* key) {
+    uint32_t index = hash(key) % hm->capacity;
     uint32_t lookup_index = index;
     do {
-        if (hm->slots[lookup_index].set && strcmp(hm->slots[lookup_index].key, key) == 0) {
+        if (hm->slots[lookup_index].set && hm->cmp(hm->slots[lookup_index].key, key) == 0) {
             free(hm->slots[lookup_index].key);
             hm->slots[lookup_index].key = 0;
             free(hm->slots[lookup_index].value);
@@ -102,19 +108,34 @@ int hashmap_del(HashMap *hm, const char *key) {
             hm->set_count--;
             return 0;
         }
-        lookup_index = (lookup_index + 1) % hm->size;
+        lookup_index = (lookup_index + 1) % hm->capacity;
     } while (lookup_index != index);
 
     return -1;
 }
 
-void hashmap_print(HashMap* hm) {
-    for (size_t i = 0; i < hm->size; ++i) {
-        printf("%s: %s\n", hm->slots[i].key, hm->slots[i].value);
+void hashmap_print(HashMap* hm, void (*fn_print_hashmap)(KV*)) {
+    printf("{");
+    for (size_t i = 0; i < hm->capacity; ++i) {
+        fn_print_hashmap(&hm->slots[i]);
+        if (i < hm->capacity - 1) {
+            printf(", ");
+        }
     }
+    printf("}");
+}
+
+void hashmap_destroy(HashMap* hm, void (*fn_hashmap_item_destroy)(KV* slot)) {
+    if (fn_hashmap_item_destroy) {
+        for (size_t i = 0; i < hm->capacity ; ++i) {
+            if (hm->slots[i].key != NULL) {
+                fn_hashmap_item_destroy(&hm->slots[i]);
+            }
+        }
+    }
+    free(hm->slots);
 }
 
 uint32_t hashmap_num_keys(HashMap* hm) {
     return hm->set_count;
 }
-
