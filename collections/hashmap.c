@@ -5,16 +5,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-static uint32_t hash(const char* key) {
-    uint32_t hash = HASHMAP_FNV_32_BIT_OFFSET_BASIS;
-
-    for (int i = 0; key[i] != '\0'; ++i) {
-        hash = hash ^ key[i];
-        hash = hash * HASHMAP_FNV_32_BIT_PRIME;
-    }
-
-    return hash;
-}
 
 HashMap hashmap_init(size_t key_size, size_t val_size, HashFn hash, CmpFn cmp) {
     KV* slots = (KV*)calloc(HASHMAP_INIT_SLOT_SIZE, sizeof(KV));
@@ -96,7 +86,7 @@ int hashmap_get(HashMap* hm, void* key, void* result) {
 }
 
 int hashmap_del(HashMap* hm, void* key) {
-    uint32_t index = hash(key) % hm->capacity;
+    uint32_t index = hm->hash(key) % hm->capacity;
     uint32_t lookup_index = index;
     do {
         if (hm->slots[lookup_index].set && hm->cmp(hm->slots[lookup_index].key, key) == 0) {

@@ -1,3 +1,6 @@
+#ifndef DYNAMIC_ARRAY_H
+#define DYNAMIC_ARRAY_H
+
 #include <stddef.h>
 
 typedef struct DynamicArray {
@@ -7,7 +10,68 @@ typedef struct DynamicArray {
     void* data;
 } DynamicArray;
 
-DynamicArray array_init(size_t item_size);
-void array_append(DynamicArray* array, const void* items, size_t num);
-void array_print(DynamicArray* array, void (*fn_print_item)(void* item));
-void array_destroy(DynamicArray* array, void (*fn_destroy_item)(void*));
+/**
+ * @brief Allocate and initialize a new DynamicArray.
+ *
+ * @param item_size Size in bytes of each element.
+ * @return Pointer to the new array, or NULL on allocation failure.
+ */
+DynamicArray* dynarr_init(size_t item_size);
+
+/**
+ * @brief Destroy a DynamicArray and free all associated memory.
+ *
+ * @param arr The array to destroy.
+ * @param fn_destroy_item Optional callback called on each element before freeing.
+ *                        Pass NULL if elements do not need cleanup.
+ */
+void dynarr_destroy(DynamicArray* arr, void (*fn_destroy_item)(void*));
+
+/**
+ * @brief Copy the element at index into dst.
+ *
+ * @param arr The array to read from.
+ * @param index The position of the element to retrieve.
+ * @param dst Destination buffer of at least item_size bytes.
+ * @return 0 on success, -1 if index is out of bounds.
+ */
+int dynarr_get(DynamicArray* arr, size_t index, void* dst);
+
+/**
+ * @brief Append num elements to the end of the array.
+ *
+ * @param arr The array to push into.
+ * @param items Pointer to the elements to append.
+ * @param num Number of elements to append.
+ * @return 0 on success, -1 on allocation failure.
+ */
+int dynarr_push(DynamicArray* arr, const void* items, size_t num);
+
+/**
+ * @brief Remove num elements from the end of the array.
+ *        Clamped to the current length if num exceeds it.
+ *
+ * @param arr The array to pop from.
+ * @param num Number of elements to remove.
+ * @return 0 on success.
+ */
+int dynarr_pop(DynamicArray* arr, size_t num);
+
+/**
+ * @brief Append all elements of extention to arr.
+ *
+ * @param arr The array to extend.
+ * @param extention The array whose elements are appended.
+ * @return 0 on success, -1 on allocation failure.
+ */
+int dynarr_extend(DynamicArray* arr, DynamicArray* extention);
+
+/**
+ * @brief Print all elements using a caller-provided print function.
+ *
+ * @param arr The array to print.
+ * @param fn_print_item Callback invoked for each element.
+ */
+void dynarr_print(DynamicArray* arr, void (*fn_print_item)(void* item));
+
+#endif

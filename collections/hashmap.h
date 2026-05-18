@@ -31,11 +31,21 @@ typedef struct {
     KV* slots;
 } HashMap;
 
+size_t hashmap_hash_str(void* key);
+size_t hashmap_hash_bytes(void* key, size_t len);
+
+size_t hashmap_cmp_str(void* a, void* b);
+size_t hashmap_cmp_bytes(void* a, void* b, size_t len);
+
+HashMap hashmap_init_str(size_t val_size);
+HashMap hashmap_init_num(size_t key_size, size_t val_size);
 HashMap hashmap_init(size_t key_size, size_t val_size, HashFn hash, CmpFn cmp);
+void hashmap_destroy(HashMap* hm, void (*fn_hashmap_item_destroy)(KV*));
+
 void hashmap_set(HashMap* hm, void* key, void* value);
 int hashmap_get(HashMap* hm, void* key, void* result);
 int hashmap_del(HashMap* hm, void* key);
+
 void hashmap_print(HashMap* hm, void(*fn_print_hashmap)(KV*));
-void hashmap_destroy(HashMap* hm, void (*fn_hashmap_item_destroy)(KV*));
 
 #endif
