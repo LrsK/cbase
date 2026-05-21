@@ -1,4 +1,4 @@
-#include "allocator.h"
+#include "memory/allocator.h"
 
 typedef struct {
   Allocator allocator;
@@ -8,7 +8,8 @@ typedef struct {
 } Arena;
 
 Arena* arena_init(void);
-void arena_destroy(Arena*);
-void arena_push(Arena* arena, void* data, size_t amount); 
-void read_data(Arena* arena, void* dest);
+void arena_destroy(Allocator** arena);
+void arena_push(Allocator* arena, void* data, size_t amount); 
+void arena_read(Allocator* arena, void* start, size_t amount, void* dest);
+void arena_print(Allocator* arena);
 
