@@ -1,52 +1,62 @@
+#include "memory/allocator.h"
+#include "memory/arena.h"
 #include <stddef.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "memory/allocator.h"
+#include <sys/mman.h>
 
 #define ARENA_SIZE 64000000
 
-static void arena_noop(){};
-
 Arena* arena_init(void) {
-    void* data_ptr = mmap(NULL, ARENA_SIZE, PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
-    if(data_ptr == NULL) { return NULL; }
+    void* data_ptr =
+        mmap(NULL, ARENA_SIZE, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+    if (data_ptr == NULL) {
+        return NULL;
+    }
     Arena* arena = (Arena*)malloc(sizeof(Arena));
-    if(arena == NULL) { return NULL; }
+    if (arena == NULL) {
+        return NULL;
+    }
 
-    arena->allocator.init = arena_init;
-    arena->allocator.destroy = arena_destroy;
-    arena->allocator.alloc = arena_noop;
-    arena->allocator.dealloc = arena_noop;
-
-    arena->pos = 0;
-    arena->cap = ARENA_SIZE;
+    arena->position = 0;
+    arena->capacity = ARENA_SIZE;
     arena->data = data_ptr;
 
     return arena;
 }
 
-void arena_destroy(Allocator** arena) {
-    Arena** arena = (Allocator**)arena;
-    munmap((*arena)->data_ptr, (*arena)->pos);
-    free(*arena);
-    *arena = NULL;
+void arena_destroy(Allocator** a) {
+    Arena** arena_ptr = (Arena**)a;
+    Arena* arena = *arena_ptr;
+    munmap(arena->data, arena->position);
+    free(arena);
+    arena = NULL;
 }
 
-void arena_push(Arena* arena, void* data, size_t amount) {
-    memcpy(arena->data+arena->pos, data, amount);
-    arena->pos = arena->pos + amount;
+void* arena_alloc(Allocator* a, size_t amount) {
+    Arena* arena = (Arena*)a;
+    while (arena->position + amount > arena->capacity) {
+        a->realloc(a);
+    }
+
+    void* start = (char*)arena->data + arena->position;
+    arena->position = arena->position + amount;
+    return start;
 }
 
-void arena_read(Arena* arena, void* start, size_t amount, void* dest) {
-  memcpy(dest, start, amount);
+int arena_read(Allocator* a, size_t start, size_t amount, void* dest) {
+    Arena* arena = (Arena*)a;
+    if (start + amount > arena->position) {
+        return -1;
+    }
+    memcpy(dest, (char*)arena->data + start, amount);
+    return 0;
 }
 
-void arena_print(Arena* arena) { 
-  char* buf = {0};
-  read_data(arena, arena->data, 10, buf)); 
-  printf("data: %s\n", (char*)buf); 
+void arena_print(Allocator* a) {
+    char* buf = {0};
+    if (arena_read(a, 0, 10, buf) != -1) {
+        printf("data: %s\n", (char*)buf);
+    }
 }
-
-
