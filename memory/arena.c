@@ -6,31 +6,33 @@
 
 #define ARENA_SIZE 64000000
 
-typedef struct Arena {
-    char* data;
-    uint64_t pos;
-} Arena;
-
-Arena* arena_make() {
-    char* data_ptr = (char*)malloc(ARENA_SIZE * sizeof(char*));
+Arena* arena_init(void) {
+    void* data_ptr = mmap(NULL, ARENA_SIZE, PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
+    if(data_ptr == NULL) { return NULL; }
     Arena* arena = (Arena*)malloc(sizeof(Arena));
+    if(arena == NULL) { return NULL; }
+
     arena->pos = 0;
     arena->data = data_ptr;
 
     return arena;
 }
 
-void arena_push(Arena* arena, char* data, uint8_t size) {
-    &arena->data[arena->pos] = data;
-    arena->pos = arena->pos + size;
+void arena_destroy(Arena* arena) {
+    munmap(arena->data_ptr, arena->pos);
 }
 
-void read_data(Arena* arena) { printf("data: %s\n", arena->data); }
-
-int main() {
-    Arena* arena = arena_make();
-    read_data(arena);
-    char* data = "are you ready for some footsie?";
-    arena_push(arena, data, strlen(data));
-    read_data(arena);
+void arena_push(Arena* arena, void* data, size_t amount) {
+    memcpy(arena->data+arena->pos, data, amount);
+    arena->pos = arena->pos + amount;
 }
+
+void read_data(Arena* arena, void* start, size_t amount, void* dest) {
+  memcpy(dest, start, amount);
+}
+
+void print_data(Arena* arena) { 
+  printf("data: %s\n", (char*)arena->data); 
+}
+
+
