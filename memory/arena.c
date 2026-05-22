@@ -27,6 +27,7 @@ Arena* arena_init(void) {
     }
     Arena* arena = (Arena*)malloc(sizeof(Arena));
     if (arena == NULL) {
+        munmap(data_ptr, ARENA_SIZE);
         return NULL;
     }
 
@@ -69,8 +70,16 @@ int arena_read(Allocator* a, size_t start, size_t amount, void* dest) {
 }
 
 void arena_print(Allocator* a) {
-    char buf[100] = {0};
-    if (arena_read(a, 0, 5, buf) != -1) {
-        printf("data: %s ...\n", buf);
+    Arena* arena = (Arena*)a;
+    unsigned char buf[100] = {0};
+    if (arena_read(a, 0, arena->position, buf) != -1) {
+        for (size_t i = 0; i < arena->position; ++i) {
+            printf("%02hhx", buf[i]);
+            if (i < arena->position - 1) {
+                printf(" ");
+            } else {
+                printf("\n");
+            }
+        }
     }
 }

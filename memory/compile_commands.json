@@ -1,6 +1,6 @@
 [
   {
-    "file": "tests/arena_test.c",
+    "file": "tests/array_test.c",
     "arguments": [
       "gcc",
       "-Wall",
@@ -11,11 +11,11 @@
       "-ggdb",
       "-I..",
       "-o",
-      "tests/arena_test",
-      "tests/arena_test.c"
+      "tests/array_test",
+      "tests/array_test.c"
     ],
     "directory": "/home/lars/dev/cbase/memory",
-    "output": "tests/arena_test"
+    "output": "tests/array_test"
   },
   {
     "file": "arena.c",
@@ -29,14 +29,14 @@
       "-ggdb",
       "-I..",
       "-o",
-      "tests/arena_test",
+      "tests/array_test",
       "arena.c"
     ],
     "directory": "/home/lars/dev/cbase/memory",
-    "output": "tests/arena_test"
+    "output": "tests/array_test"
   },
   {
-    "file": "tests/arena_test.c",
+    "file": "tests/array_test.c",
     "arguments": [
       "gcc",
       "-fPIC",
@@ -62,8 +62,8 @@
       "-ggdb",
       "-I..",
       "-o",
-      "tests/arena_test",
-      "tests/arena_test.c",
+      "tests/array_test",
+      "tests/array_test.c",
       "-U_FORTIFY_SOURCE",
       "-D_FORTIFY_SOURCE=3",
       "-B/nix/store/fjkx1l5cnskzrqacf08z7i8z17256w0j-glibc-2.42-61/lib/",
@@ -83,7 +83,7 @@
       "/nix/store/q0blg6512mzczxmjk40whhfc57p5p545-gdb-17.1/include"
     ],
     "directory": "/home/lars/dev/cbase/memory",
-    "output": "tests/arena_test"
+    "output": "tests/array_test"
   },
   {
     "file": "arena.c",
@@ -112,7 +112,7 @@
       "-ggdb",
       "-I..",
       "-o",
-      "tests/arena_test",
+      "tests/array_test",
       "arena.c",
       "-U_FORTIFY_SOURCE",
       "-D_FORTIFY_SOURCE=3",
@@ -133,6 +133,6 @@
       "/nix/store/q0blg6512mzczxmjk40whhfc57p5p545-gdb-17.1/include"
     ],
     "directory": "/home/lars/dev/cbase/memory",
-    "output": "tests/arena_test"
+    "output": "tests/array_test"
   }
 ]

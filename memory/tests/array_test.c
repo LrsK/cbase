@@ -5,8 +5,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define INIT_SIZE 1000
-
 typedef struct MyArr {
     Allocator* a;
     void* data;
@@ -18,7 +16,7 @@ MyArr* dynarr_init(Allocator* a, size_t item_size) {
     MyArr* arr = (MyArr*)malloc(sizeof(MyArr));
 
     arr->a = a;
-    arr->data = a->alloc(a, INIT_SIZE);
+    arr->data = a->alloc(a, 0);
     arr->length = 0;
     arr->item_size = item_size;
 
@@ -31,6 +29,20 @@ void dynarr_push(MyArr* arr, void* item) {
     arr->length++;
 }
 
+void dynarr_print(MyArr* arr) {
+    printf("[");
+
+    for (size_t i = 0; i < arr->length; ++i) {
+        if (i < arr->length - 1) {
+            printf("%x, ", *((unsigned char*)arr->data + (i * arr->item_size)));
+            continue;
+        }
+        printf("%x", *((unsigned char*)arr->data + (i * arr->item_size)));
+    }
+
+    printf("]\n");
+}
+
 int main(void) {
     Arena* arena = arena_init();
     MyArr* arr = dynarr_init((Allocator*)arena, sizeof(int));
@@ -38,4 +50,6 @@ int main(void) {
         dynarr_push(arr, &i);
     }
     arena_print((Allocator*)arena);
+
+    dynarr_print(arr);
 }
