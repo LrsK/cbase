@@ -14,7 +14,7 @@ struct Allocator {
     /*
      * Destroy all allocations
      * */
-    void (*destroy)(Allocator*);
+    void (*destroy)(Allocator**);
 
     /*
      * Allocate a new piece of amount bytes

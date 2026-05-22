@@ -1,5 +1,5 @@
-#include "memory/allocator.h"
 #include "memory/arena.h"
+#include "memory/allocator.h"
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,6 +7,17 @@
 #include <sys/mman.h>
 
 #define ARENA_SIZE 64000000
+
+struct Arena {
+    Allocator allocator;
+    void* data;
+    size_t position;
+    size_t capacity;
+};
+
+// Forward declare interface implementations
+void* arena_alloc(Allocator*, size_t);
+void arena_destroy(Allocator**);
 
 Arena* arena_init(void) {
     void* data_ptr =
@@ -18,6 +29,9 @@ Arena* arena_init(void) {
     if (arena == NULL) {
         return NULL;
     }
+
+    arena->allocator.alloc = arena_alloc;
+    arena->allocator.destroy = arena_destroy;
 
     arena->position = 0;
     arena->capacity = ARENA_SIZE;
@@ -55,8 +69,8 @@ int arena_read(Allocator* a, size_t start, size_t amount, void* dest) {
 }
 
 void arena_print(Allocator* a) {
-    char* buf = {0};
-    if (arena_read(a, 0, 10, buf) != -1) {
-        printf("data: %s\n", (char*)buf);
+    char buf[100] = {0};
+    if (arena_read(a, 0, 5, buf) != -1) {
+        printf("data: %s ...\n", buf);
     }
 }
