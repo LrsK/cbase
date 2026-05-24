@@ -13,6 +13,10 @@ static int failures = 0;
         failures++;                                                                                \
     }
 
+void print_int(void* n) {
+    printf("%d", *(int*)n);
+}
+
 static void test_push_get(void) {
     Arena* aa = arena_init();
     DynamicArray* arr = dynarr_make((Allocator*)aa, sizeof(int));
@@ -58,6 +62,11 @@ static void test_push_multiple_pop_get(void) {
     ASSERT(dynarr_get(arr, 1, &out) == 0);
     ASSERT(out == 4555);
     ASSERT(arr->length == 2);
+    int val4 = 8675309;
+    dynarr_push(arr, &val4, 1);
+    ASSERT(dynarr_get(arr, 2, &out) == 0);
+    dynarr_print(arr, print_int);
+    ASSERT(out == val4);
 }
 
 typedef struct {
@@ -149,10 +158,50 @@ static void test_push_multiple_struct_get(void) {
     ext->allocator->destroy(&ext->allocator);
 }
 
+static void test_set(void) {
+    Arena* aa = arena_init();
+    DynamicArray* arr = dynarr_make((Allocator*)aa, sizeof(int));
+
+    int val = 1;
+    dynarr_push(arr, &val, 1);
+    val = 2;
+    dynarr_push(arr, &val, 1);
+    val = 3;
+    dynarr_push(arr, &val, 1);
+
+    int replacement = 99;
+    ASSERT(dynarr_set(arr, 1, &replacement) == 0);
+    ASSERT(dynarr_set(arr, 55555555, &replacement) == -1);
+
+    int out;
+    ASSERT(dynarr_get(arr, 0, &out) == 0);
+    ASSERT(out == 1);
+    ASSERT(dynarr_get(arr, 1, &out) == 0);
+    ASSERT(out == 99);
+    ASSERT(dynarr_get(arr, 2, &out) == 0);
+    ASSERT(out == 3);
+    ASSERT(arr->length == 3);
+
+    arr->allocator->destroy(&arr->allocator);
+}
+
+static void test_destroy(void) {
+    Arena* aa = arena_init();
+    DynamicArray* arr = dynarr_make((Allocator*)aa, sizeof(int));
+
+    int val = 42;
+    dynarr_push(arr, &val, 1);
+
+    arr->allocator->destroy(&arr->allocator);
+    ASSERT(arr->allocator == NULL);
+}
+
 int main(void) {
     test_push_get();
     test_push_multiple_struct_get();
     test_push_multiple_pop_get();
+    test_set();
+    test_destroy();
     if (failures == 0)
         printf("All tests passed.\n");
     else

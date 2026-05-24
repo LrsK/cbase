@@ -59,6 +59,16 @@ int dynarr_pop(DynamicArray* arr, size_t num);
  */
 int dynarr_extend(DynamicArray* arr, DynamicArray* extention);
 
+/*
+ * @brief Set the value of item at position index
+ * @param index Position where item will be set
+ * @param item Item containing data to be set at index
+ * @return 0 on success, -1 on error
+ *
+ */
+int dynarr_set(DynamicArray* arr, size_t index, void* item);
+
+
 /**
  * @brief Print all elements using a caller-provided print function.
  *

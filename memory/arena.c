@@ -18,6 +18,7 @@ struct Arena {
 // Forward declare interface implementations
 void* arena_alloc(Allocator*, size_t);
 void arena_destroy(Allocator**);
+void arena_dealloc(Allocator*, size_t);
 
 Arena* arena_init(void) {
     void* data_ptr =
@@ -33,6 +34,7 @@ Arena* arena_init(void) {
 
     arena->allocator.alloc = arena_alloc;
     arena->allocator.destroy = arena_destroy;
+    arena->allocator.dealloc = arena_dealloc;
 
     arena->position = 0;
     arena->capacity = ARENA_SIZE;
@@ -42,11 +44,11 @@ Arena* arena_init(void) {
 }
 
 void arena_destroy(Allocator** a) {
-    Arena** arena_ptr = (Arena**)a;
-    Arena* arena = *arena_ptr;
-    munmap(arena->data, arena->position);
+    Arena** arena_pp = (Arena**)a;
+    Arena* arena = *arena_pp;
+    munmap(arena->data, ARENA_SIZE);
     free(arena);
-    arena = NULL;
+    *arena_pp = NULL;
 }
 
 void* arena_alloc(Allocator* a, size_t amount) {
@@ -58,6 +60,14 @@ void* arena_alloc(Allocator* a, size_t amount) {
     void* start = (char*)arena->data + arena->position;
     arena->position = arena->position + amount;
     return start;
+}
+
+void arena_dealloc(Allocator* a, size_t amount) {
+    Arena* arena = (Arena*)a;
+    if (amount > arena->position) {
+        arena->position = 0;
+    }
+    arena->position = arena->position - amount;
 }
 
 int arena_read(Allocator* a, size_t start, size_t amount, void* dest) {

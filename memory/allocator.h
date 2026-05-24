@@ -22,14 +22,14 @@ struct Allocator {
     void* (*alloc)(Allocator*, size_t amount);
 
     /*
-     * Allocate a new piece of amount bytes
+     * Grow address space
      * */
     void* (*realloc)(Allocator*);
 
     /*
      * Remove some amount of bytes from start point
      * */
-    void (*dealloc)(Allocator*, void* start, size_t amount);
+    void (*dealloc)(Allocator*, size_t amount);
 };
 
 #endif

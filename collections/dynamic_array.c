@@ -47,6 +47,7 @@ int dynarr_pop(DynamicArray* arr, size_t num) {
         return -1;
     }
 
+    arr->allocator->dealloc(arr->allocator, num * arr->item_size);
     arr->length = arr->length - num;
 
     return 0;
@@ -60,6 +61,20 @@ int dynarr_extend(DynamicArray* arr, DynamicArray* extention) {
 
     memcpy(dest, extention->data, extention->length * extention->item_size);
     arr->length = arr->length + extention->length;
+    return 0;
+}
+
+int dynarr_set(DynamicArray* arr, size_t index, void* item) {
+    if (index > arr->length - 1) {
+        return -1;
+    }
+
+    if (item == NULL) {
+        return -1;
+    }
+
+    memcpy((unsigned char*)arr->data + index * arr->item_size, item, arr->item_size);
+
     return 0;
 }
 
