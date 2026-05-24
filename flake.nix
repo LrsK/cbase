@@ -24,10 +24,9 @@
               codespell
               cppcheck
               doxygen
-              gf
-            ] ++ (if pkgs.stdenv.hostPlatform.system == "aarch64-darwin" then [ ] else [ gdb ]);
+              gcc
+            ] ++ (if pkgs.stdenv.hostPlatform.isDarwin then [ vscode-extensions.vadimcn.vscode-lldb ] else [ gdb gf ]);
           };
       });
     };
 }
-

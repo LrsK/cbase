@@ -1,11 +1,12 @@
 #ifndef DYNAMIC_ARRAY_H
 #define DYNAMIC_ARRAY_H
 
+#include "memory/allocator.h"
 #include <stddef.h>
 
 typedef struct DynamicArray {
+    Allocator* allocator;
     size_t length;
-    size_t capacity;
     size_t item_size;
     void* data;
 } DynamicArray;
@@ -13,19 +14,11 @@ typedef struct DynamicArray {
 /**
  * @brief Allocate and initialize a new DynamicArray.
  *
+ * @param a The allocator to use for memory management.
  * @param item_size Size in bytes of each element.
  * @return Pointer to the new array, or NULL on allocation failure.
  */
-DynamicArray* dynarr_init(size_t item_size);
-
-/**
- * @brief Destroy a DynamicArray and free all associated memory.
- *
- * @param arr The array to destroy.
- * @param fn_destroy_item Optional callback called on each element before freeing.
- *                        Pass NULL if elements do not need cleanup.
- */
-void dynarr_destroy(DynamicArray* arr, void (*fn_destroy_item)(void*));
+DynamicArray* dynarr_make(Allocator* a, size_t item_size);
 
 /**
  * @brief Copy the element at index into dst.
