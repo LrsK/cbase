@@ -6,8 +6,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define DA_DEFAULT_ALLOC_SIZE 2
-
 DynamicArray* dynarr_make(Allocator* a, size_t item_size) {
     DynamicArray* arr = (DynamicArray*)malloc(sizeof(DynamicArray));
     if (arr == NULL) {
@@ -76,6 +74,25 @@ int dynarr_set(DynamicArray* arr, size_t index, void* item) {
     memcpy((unsigned char*)arr->data + index * arr->item_size, item, arr->item_size);
 
     return 0;
+}
+
+int dynarr_find(DynamicArray* arr, void* item, CompareFunc cmp) {
+    for (size_t i = 0; i < arr->length; ++i) {
+        if (cmp(item, (unsigned char*)arr->data + i * arr->item_size)) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+DynamicArray* dynarr_slice(DynamicArray* arr, size_t from, size_t to) {
+    (void)arr;
+    (void)from;
+    (void)to;
+    fprintf(stderr, "dynarr_slice not implemented\n");
+
+    return NULL;
 }
 
 void dynarr_print(DynamicArray* arr, void (*fn_print_item)(void* item)) {

@@ -4,6 +4,8 @@
 #include "memory/allocator.h"
 #include <stddef.h>
 
+typedef size_t (*CompareFunc)(void* a, void* b);
+
 typedef struct DynamicArray {
     Allocator* allocator;
     size_t length;
@@ -68,6 +70,22 @@ int dynarr_extend(DynamicArray* arr, DynamicArray* extention);
  */
 int dynarr_set(DynamicArray* arr, size_t index, void* item);
 
+/*
+ * @brief Find an item in the array
+ * @param item Item you want to find in the array
+ * @return the index of the item when found or -1 if not found
+ *
+ */
+int dynarr_find(DynamicArray* arr, void* item, CompareFunc cmp);
+
+/*
+ * @brief Return a DynamicArray that reflects the content of another
+ * @param from Where to begin the slice
+ * @param to Where to end the slice
+ * @return A pointer to a new DynamicArray
+ *
+ */
+DynamicArray* dynarr_slice(DynamicArray* arr, size_t from, size_t to);
 
 /**
  * @brief Print all elements using a caller-provided print function.

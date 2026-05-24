@@ -1,3 +1,5 @@
 .direnv
 .cache
 */tests/*_test
+*.dSYM
+compile_commands.json
