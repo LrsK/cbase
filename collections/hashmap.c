@@ -1,31 +1,31 @@
 #include "hashmap.h"
+#include "memory/allocator.h"
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+HashMap* hashmap_init(Allocator* a, size_t key_size, size_t val_size, HashFn hash, CmpFn cmp) {
+    HashMap* hm = (HashMap*)malloc(sizeof(HashMap));
 
-HashMap hashmap_init(size_t key_size, size_t val_size, HashFn hash, CmpFn cmp) {
-    KV* slots = (KV*)calloc(HASHMAP_INIT_SLOT_SIZE, sizeof(KV));
-    HashMap hm = {
-        .key_size = key_size,
-        .val_size = val_size,
-        .hash = hash,
-        .cmp = cmp,
-        .set_count = 0,
-        .capacity = HASHMAP_INIT_SLOT_SIZE,
-        .slots = slots,
-    };
+    hm->allocator = a;
+    hm->key_size = key_size;
+    hm->val_size = val_size;
+    hm->hash = hash;
+    hm->cmp = cmp;
+    hm->num_slots = 0;
+    hm->num_set_slots = 0;
+    hm->slots = a->alloc(a, 0);
 
     return hm;
 }
 
 static void hashmap_resize(HashMap* hm) {
-    size_t original_capacity = hm->capacity;
-    hm->capacity = hm->capacity * HASHMAP_SLOT_GROWTH_FACTOR;
-    printf("RESIZE %zu->%zu\n", original_capacity, hm->capacity);
-    KV* new_slots = (KV*)calloc(hm->capacity, sizeof(KV));
+    size_t prev_num_slots = hm->num_slots;
+    hm->num_slots = hm->num_slots * HASHMAP_SLOT_GROWTH_FACTOR;
+    printf("RESIZE %zu->%zu\n", prev_num_slots, hm->num_slots);
+    hm->allocator->alloc(hm->allocator, hm->num_slots);
 
     // Rehash
     for (size_t i = 0; i < original_capacity; ++i) {
@@ -44,7 +44,7 @@ static void hashmap_resize(HashMap* hm) {
 }
 
 void hashmap_set(HashMap* hm, void* key, void* value) {
-    if (hm->set_count > ((hm->capacity * 3) / 4)) {
+    if (hm->num_set_slots > ((hm->capacity * 3) / 4)) {
         hashmap_resize(hm);
     }
 
@@ -68,7 +68,7 @@ void hashmap_set(HashMap* hm, void* key, void* value) {
     strcpy(hm->slots[index].value, value);
 
     hm->slots[index].set = 1;
-    hm->set_count++;
+    hm->num_set_slots++;
 }
 
 int hashmap_get(HashMap* hm, void* key, void* result) {
@@ -95,7 +95,7 @@ int hashmap_del(HashMap* hm, void* key) {
             free(hm->slots[lookup_index].value);
             hm->slots[lookup_index].value = 0;
             hm->slots[lookup_index].set = 0;
-            hm->set_count--;
+            hm->num_set_slots--;
             return 0;
         }
         lookup_index = (lookup_index + 1) % hm->capacity;
@@ -117,7 +117,7 @@ void hashmap_print(HashMap* hm, void (*fn_print_hashmap)(KV*)) {
 
 void hashmap_destroy(HashMap* hm, void (*fn_hashmap_item_destroy)(KV* slot)) {
     if (fn_hashmap_item_destroy) {
-        for (size_t i = 0; i < hm->capacity ; ++i) {
+        for (size_t i = 0; i < hm->capacity; ++i) {
             if (hm->slots[i].key != NULL) {
                 fn_hashmap_item_destroy(&hm->slots[i]);
             }
@@ -127,5 +127,5 @@ void hashmap_destroy(HashMap* hm, void (*fn_hashmap_item_destroy)(KV* slot)) {
 }
 
 uint32_t hashmap_num_keys(HashMap* hm) {
-    return hm->set_count;
+    return hm->num_set_slots;
 }

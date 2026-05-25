@@ -1,6 +1,7 @@
 #ifndef HASHMAP_H
 #define HASHMAP_H
 
+#include "memory/allocator.h"
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -22,11 +23,13 @@ typedef struct {
 } KV;
 
 typedef struct {
+    Allocator* allocator;
     HashFn hash;
     CmpFn cmp;
     size_t key_size;
     size_t val_size;
-    size_t set_count;
+    size_t num_slots;
+    size_t num_set_slots;
     size_t capacity;
     KV* slots;
 } HashMap;
@@ -39,7 +42,9 @@ size_t hashmap_cmp_bytes(void* a, void* b, size_t len);
 
 HashMap hashmap_init_str(size_t val_size);
 HashMap hashmap_init_num(size_t key_size, size_t val_size);
-HashMap hashmap_init(size_t key_size, size_t val_size, HashFn hash, CmpFn cmp);
+
+
+HashMap* hashmap_init(Allocator* a, size_t key_size, size_t val_size, HashFn hash, CmpFn cmp);
 void hashmap_destroy(HashMap* hm, void (*fn_hashmap_item_destroy)(KV*));
 
 void hashmap_set(HashMap* hm, void* key, void* value);
