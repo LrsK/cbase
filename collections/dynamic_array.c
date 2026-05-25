@@ -29,6 +29,9 @@ int dynarr_get(DynamicArray* arr, size_t index, void* dest) {
 }
 
 int dynarr_push(DynamicArray* arr, const void* items, size_t num) {
+    if (arr->allocator == NULL) {
+        return -1;
+    }
     void* dest = arr->allocator->alloc(arr->allocator, num * arr->item_size);
     if (dest == NULL) {
         return -1;
@@ -41,6 +44,9 @@ int dynarr_push(DynamicArray* arr, const void* items, size_t num) {
 }
 
 int dynarr_pop(DynamicArray* arr, size_t num) {
+    if (arr->allocator == NULL) {
+        return -1;
+    }
     if (num > arr->length) {
         return -1;
     }
@@ -52,6 +58,9 @@ int dynarr_pop(DynamicArray* arr, size_t num) {
 }
 
 int dynarr_extend(DynamicArray* arr, DynamicArray* extention) {
+    if (arr->allocator == NULL) {
+        return -1;
+    }
     void* dest = arr->allocator->alloc(arr->allocator, extention->length * extention->item_size);
     if (dest == NULL) {
         return -1;
@@ -63,10 +72,12 @@ int dynarr_extend(DynamicArray* arr, DynamicArray* extention) {
 }
 
 int dynarr_set(DynamicArray* arr, size_t index, void* item) {
+    if (arr->allocator == NULL) {
+        return -1;
+    }
     if (index > arr->length - 1) {
         return -1;
     }
-
     if (item == NULL) {
         return -1;
     }
@@ -87,12 +98,19 @@ int dynarr_find(DynamicArray* arr, void* item, CompareFunc cmp) {
 }
 
 DynamicArray* dynarr_slice(DynamicArray* arr, size_t from, size_t to) {
-    (void)arr;
-    (void)from;
-    (void)to;
-    fprintf(stderr, "dynarr_slice not implemented\n");
+    if (to > arr->length || from >= to) {
+        return NULL;
+    }
+    DynamicArray* slice = (DynamicArray*)malloc(sizeof(DynamicArray));
+    if (slice == NULL) {
+        return NULL;
+    }
+    slice->allocator = NULL;
+    slice->length = to - from;
+    slice->item_size = arr->item_size;
+    slice->data = (unsigned char*)arr->data + from * arr->item_size;
 
-    return NULL;
+    return slice;
 }
 
 void dynarr_print(DynamicArray* arr, void (*fn_print_item)(void* item)) {

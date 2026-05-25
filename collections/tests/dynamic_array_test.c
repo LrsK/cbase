@@ -226,6 +226,36 @@ static void test_find_struct(void) {
 
 // ── allocator tests ───────────────────────────────────────────────────────────
 
+static void test_slice(void) {
+    Arena* aa = arena_init();
+    DynamicArray* arr = dynarr_make((Allocator*)aa, sizeof(int));
+
+    for (int i = 0; i < 10; ++i) {
+        dynarr_push(arr, &i, 1);
+    }
+
+    DynamicArray* slice = dynarr_slice(arr, 3, 7);
+    ASSERT(slice != NULL);
+    ASSERT(slice->length == 4);
+    ASSERT(slice->allocator == NULL);
+
+    int out;
+    ASSERT(dynarr_get(slice, 0, &out) == 0);
+    ASSERT(out == 3);
+    ASSERT(dynarr_get(slice, 3, &out) == 0);
+    ASSERT(out == 6);
+    ASSERT(dynarr_get(slice, 4, &out) == -1);
+
+    ASSERT(dynarr_slice(arr, 5, 3) == NULL);
+    ASSERT(dynarr_slice(arr, 5, 5) == NULL);
+    ASSERT(dynarr_slice(arr, 0, 11) == NULL);
+
+    ASSERT(dynarr_push(slice, &out, 1) == -1);
+
+    free(slice);
+    arr->allocator->destroy(&arr->allocator);
+}
+
 static void test_destroy(void) {
     Arena* aa = arena_init();
     DynamicArray* arr = dynarr_make((Allocator*)aa, sizeof(int));
@@ -246,6 +276,7 @@ int main(void) {
     test_find_int();
     test_push_multiple_struct_get();
     test_find_struct();
+    test_slice();
     test_destroy();
     if (failures == 0)
         printf("All tests passed.\n");
