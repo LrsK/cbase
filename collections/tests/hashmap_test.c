@@ -1,107 +1,118 @@
 #include "collections/hashmap.h"
+#include "memory/allocator.h"
+#include "memory/arena.h"
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-void str_shift_left(char* str, uint8_t amount) {
-    int len = strlen(str) + 1;
-    memmove(str, str + amount, len - amount);
-}
+static int failures = 0;
 
-size_t str_hash(void* key) {
-    uint32_t hash = HASHMAP_FNV_32_BIT_OFFSET_BASIS;
-    for (int i = 0; ((char*)key)[i] != '\0'; ++i) {
-        char keystr = ((char*)key)[i];
-        hash = hash ^ keystr;
-        hash = hash * HASHMAP_FNV_32_BIT_PRIME;
+#define ASSERT(cond)                                                                               \
+    if (!(cond)) {                                                                                 \
+        printf("FAIL: %s:%d: %s\n", __FILE__, __LINE__, #cond);                                    \
+        failures++;                                                                                \
     }
 
-    return hash;
-}
-
-size_t str_cmp(void* a, void* b) {
-    return strcmp((char*)a, (char*)b);
-}
-
-void print_str_str_hashmap(KV* slot) {
-    printf("%s: %s", (char*)slot->key, (char*)slot->value);
-}
-
-void destroy_str_str_hashmap(KV* slot) {
-    free(slot->key);
-    free(slot->value);
-}
+// ── helpers ───────────────────────────────────────────────────────────────────
 
 #define ITEMS 1000000
 #define NUMPADDING 4
 
-// Quick and dirty string generation
-char** make_strs(void) {
+static void str_shift_left(char* str, uint8_t amount) {
+    int len = strlen(str) + 1;
+    memmove(str, str + amount, len - amount);
+}
+
+static char** make_strs(void) {
     char** strs = malloc(ITEMS * sizeof(char*));
     if (strs == NULL) {
         fprintf(stderr, "Memory allocation failed\n");
         exit(EXIT_FAILURE);
     }
-
-    // Allocate memory for each string in the dynamic arrays
     for (int i = 0; i < ITEMS; ++i) {
-        strs[i] = malloc(10 * sizeof(char)); // Allocate space for each key
+        strs[i] = malloc(10 * sizeof(char));
         if (strs[i] == NULL) {
             fprintf(stderr, "Memory allocation failed\n");
             exit(EXIT_FAILURE);
         }
-        // Populate the keys and values
         sprintf(strs[i], "key%0*d", NUMPADDING, i);
     }
-
     return strs;
 }
 
-int main(void) {
-    HashMap hm = hashmap_init(sizeof(char*), sizeof(char*), str_hash, str_cmp);
+static void print_str_str(void* key, void* val) {
+    printf("%s: %s", *(char**)key, *(char**)val);
+}
+
+// ── tests ─────────────────────────────────────────────────────────────────────
+
+static void test_set_get_del(void) {
+    Arena* aa = arena_init();
+    HashMap* hm = hashmap_make((Allocator*)aa, sizeof(char*), sizeof(char*), hashmap_hash_str,
+                               hashmap_cmp_str, 0);
+
+    char result[100];
+
+    ASSERT(hashmap_set(hm, "test123", "test123") == 0);
+    ASSERT(hashmap_get(hm, "test123", result) == 0);
+    ASSERT(hashmap_del(hm, "test123") == 0);
+    ASSERT(hashmap_get(hm, "test123", result) != 0);
+
+    hashmap_destroy(hm);
+    arena_destroy((Allocator**)&aa);
+}
+
+static void test_set_get_large(void) {
+    Arena* aa = arena_init();
+    HashMap* hm = hashmap_make((Allocator*)aa, sizeof(char*), sizeof(char*), hashmap_hash_str,
+                               hashmap_cmp_str, 0);
 
     char** keys = make_strs();
     char** values = make_strs();
 
-    // Set data
     for (int i = 0; i < ITEMS; ++i) {
-        hashmap_set(&hm, keys[i], values[i]);
+        hashmap_set(hm, keys[i], values[i]);
     }
 
-    char result[100];
+    char result[10];
     for (int i = 0; i < ITEMS; ++i) {
-        hashmap_get(&hm, keys[i], result);
+        ASSERT(hashmap_get(hm, keys[i], result) == 0);
         str_shift_left(keys[i], 3);
         str_shift_left(values[i], 3);
-        if (strcmp(keys[i], values[i])) {
-            printf("%s:%s - different.\n", keys[i], result);
-        }
+        ASSERT(strcmp(keys[i], values[i]) == 0);
     }
 
-    int status = 0;
-    hashmap_set(&hm, "test123", "test123");
-    // hashmap_print(hm);
-    status = hashmap_get(&hm, "test123", result);
-    if (status) {
-        printf("something went wrong when looking for test123\n");
-    }
-    status = hashmap_del(&hm, "test123");
-    if (status) {
-        printf("something went wrong when deleting test123\n");
-    }
-    status = hashmap_get(&hm, "test123", result);
-    if (!status) {
-        printf("shouldn't have found test123\n");
-    }
-    hashmap_destroy(&hm, NULL);
+    hashmap_destroy(hm);
+    arena_destroy((Allocator**)&aa);
+}
 
-    HashMap hm2 = hashmap_init(sizeof(char*), sizeof(char*), str_hash, str_cmp);
-    hashmap_set(&hm2, "test123", "test123");
-    hashmap_set(&hm2, "my123", "qwerty");
-    hashmap_set(&hm2, "vvvv", "cccc");
-    hashmap_print(&hm2, print_str_str_hashmap);
-    hashmap_destroy(&hm2, destroy_str_str_hashmap);
+static void test_print_destroy(void) {
+    Arena* aa = arena_init();
+    HashMap* hm = hashmap_make((Allocator*)aa, sizeof(char*), sizeof(char*), hashmap_hash_str,
+                               hashmap_cmp_str, 0);
 
+    hashmap_set(hm, "test123", "test123");
+    hashmap_set(hm, "my123", "qwerty");
+    hashmap_set(hm, "vvvv", "cccc");
+    hashmap_print(hm, print_str_str);
+    printf("\n");
+    hashmap_destroy(hm);
+
+    arena_destroy((Allocator**)&aa);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+int main(void) {
+    test_set_get_del();
+    test_set_get_large();
+    test_print_destroy();
+
+    if (failures == 0) {
+        printf("All tests passed.\n");
+    } else {
+        printf("%d test(s) failed.\n", failures);
+    }
 }
