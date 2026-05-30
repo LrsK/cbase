@@ -61,7 +61,6 @@ static void test_set_get_del(void) {
     ASSERT(hashmap_get(hm, "test123", result) != 0);
 
     hashmap_destroy(hm);
-    arena_destroy((Allocator**)&aa);
 }
 
 static void test_set_get_large(void) {
@@ -85,7 +84,6 @@ static void test_set_get_large(void) {
     }
 
     hashmap_destroy(hm);
-    arena_destroy((Allocator**)&aa);
 }
 
 static void test_print_destroy(void) {
@@ -100,7 +98,6 @@ static void test_print_destroy(void) {
     printf("\n");
     hashmap_destroy(hm);
 
-    arena_destroy((Allocator**)&aa);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
