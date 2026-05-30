@@ -110,7 +110,7 @@ int hashmap_set(HashMap* hm, void* key, void* value) {
     // key
     memcpy(i_key, key, hm->key_size);
     // value
-    memcpy((unsigned char*)i_key+hm->val_size, value, hm->val_size);
+    memcpy((unsigned char*)i_key+hm->key_size, value, hm->val_size);
 
     hm->num_set_slots++;
 
@@ -125,7 +125,7 @@ int hashmap_get(HashMap* hm, void* key, void* result) {
         uint8_t* i_set = (uint8_t*)i_slot;
         void* i_key = (unsigned char*)i_slot+1;
         if (*i_set && hm->cmp(i_key, key) == 0) {
-            memcpy(result, (unsigned char*)i_key+hm->val_size, hm->val_size);
+            memcpy(result, (unsigned char*)i_key+hm->key_size, hm->val_size);
             return 0;
         }
         lookup_index = (lookup_index + 1) % hm->num_slots;
